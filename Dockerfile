@@ -50,5 +50,5 @@ RUN apt update && \
 COPY --from=build /tmp/softether-pkgs /tmp/softether-pkgs
 COPY --from=build /usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu
 RUN dpkg -i /tmp/softether-pkgs/*.deb
-ENTRYPOINT ["/usr/libexec/softether/vpnserver/vpnserver"]
-CMD ["start","--foreground"]
+ENTRYPOINT ["/usr/libexec/softether/vpnserver/vpnserver","start","--foreground"]
+# CMD ["start","--foreground"]
