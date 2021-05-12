@@ -50,5 +50,5 @@ RUN apt update && \
       zlib1g
 COPY --from=build /tmp/softether-pkgs /tmp/softether-pkgs
 RUN dpkg -i /tmp/softether-pkgs/*.deb
-# ENTRYPOINT [ "/usr/local/libexec/softether/vpnserver" ]
-# CMD [ "vpnserver", "start --foreground" ]
+ENTRYPOINT [ "/usr/libexec/softether/vpnserver" ]``
+CMD [ "vpnserver", "start --foreground" ]
