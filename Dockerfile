@@ -49,6 +49,7 @@ RUN apt update && \
       iptables \
       zlib1g
 COPY --from=build /tmp/softether-pkgs /tmp/softether-pkgs
+COPY --from=build /usr/local/lib/*.so /usr/lib
 RUN dpkg -i /tmp/softether-pkgs/*.deb
 ENTRYPOINT [ "/usr/libexec/softether/vpnserver/vpnserver" ]``
 CMD [ "start", "--foreground" ]
