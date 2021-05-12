@@ -19,13 +19,12 @@ RUN apt update && \
       zip
 COPY --from=prep /usr/local/src /usr/local/src
 RUN mkdir -pv /logs && \
-    mkdir -pv /config && \
-    mkdir -pv /usr/local/src/SoftEtherVPN/tmp
+    mkdir -pv /config
 RUN cd /usr/local/src/SoftEtherVPN && \
     sed 's/StrCmpi(region, "JP") == 0 || StrCmpi(region, "CN") == 0/false/' -i src/Cedar/Server.c && \
     CMAKE_FLAGS="-DSE_LOGDIR=/logs -DSE_DBDIR=/config" ./configure && \
-    make -C tmp && \
-    make -C tmp package
+    make -C build && \
+    make -C build package
 RUN mkdir -pv /tmp/softether-pkgs && \
     cp /usr/local/src/SoftEtherVPN/build/softether-*.deb /tmp/softether-pkgs
 # RUN cp /usr/local/lib/*.so /usr/lib
