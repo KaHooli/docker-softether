@@ -27,7 +27,6 @@ RUN cd /usr/local/src/SoftEtherVPN && \
     make -C build package
 RUN mkdir -pv /tmp/softether-pkgs && \
     cp /usr/local/src/SoftEtherVPN/build/softether-*.deb /tmp/softether-pkgs
-RUN cp /usr/local/lib/*.so /usr/lib
 
 FROM debian:10-slim
 # Config file: /config/vpn_server.config
