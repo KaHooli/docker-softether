@@ -18,6 +18,8 @@ RUN apt update && \
       pkg-config
 # other apt packages recommended by above install: patch less ssh-client manpages manpages-dev libfile-fcntllock-perl liblocale-gettext-perl xz-utils libglib2.0-data shared-mime-info xdg-user-dirs krb5-locales publicsuffix libsasl2-modules netbase
 
+RUN mkdir -pv /logs && mkdir -pv /config
+
 # Cloning SoftEther VPN source code
 RUN git clone https://github.com/SoftEtherVPN/SoftEtherVPN.git /SoftEtherVPN
 RUN cd /SoftEtherVPN && \
@@ -25,7 +27,7 @@ RUN cd /SoftEtherVPN && \
     git submodule update
 
 # Compiling SoftEther VPN server
-RUN cd /SoftEtherVPN && ./configure
+RUN cd /SoftEtherVPN && CMAKE_FLAGS="-DSE_LOGDIR=/logs -DSE_DBDIR=/config" ./configure
 RUN cd /SoftEtherVPN && make -C build
 RUN cd /SoftEtherVPN && make -C build install && cd /
 # Line below fixes error about missing libcedar.so
@@ -37,6 +39,8 @@ RUN cp /usr/local/lib/*.so /usr/lib
 # RUN chmod 755 /opt/*.sh
 
 EXPOSE 5555
+
+# VOLUMES
 
 # Config file: /usr/local/libexec/softether/vpnserver/vpn_server.config
 
