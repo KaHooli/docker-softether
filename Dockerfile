@@ -10,8 +10,10 @@ RUN apt update && \
       g++ \
       libncurses5-dev \
       libreadline-dev \
+      libsodium-dev \
       libssl-dev \
       make \
+      pkg-config \
       zlib1g-dev \
       file \
       zip
