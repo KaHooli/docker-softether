@@ -20,7 +20,7 @@ RUN apt update && \
 COPY --from=prep /usr/local/src /usr/local/src
 RUN mkdir -pv /logs && \
     mkdir -pv /config && \
-    mkdir -pv /tmp
+    mkdir -pv /usr/local/src/SoftEtherVPN/tmp
 RUN cd /usr/local/src/SoftEtherVPN && \
     sed 's/StrCmpi(region, "JP") == 0 || StrCmpi(region, "CN") == 0/false/' -i src/Cedar/Server.c && \
     CMAKE_FLAGS="-DSE_LOGDIR=/logs -DSE_DBDIR=/config" ./configure && \
