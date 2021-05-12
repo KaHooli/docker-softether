@@ -1,48 +1,66 @@
-FROM ubuntu:20.04
+FROM alpine:3.9 as prep
 
-ENV DEBIAN_FRONTEND=noninteractive
+RUN apk add --no-cache git
+
+RUN git clone --recurse-submodules --depth 1 --single-branch https://github.com/SoftEtherVPN/SoftEtherVPN.git /usr/local/src/SoftEtherVPN
+
+FROM debian:10 as build
 
 RUN apt update && \
-    apt -yq --no-install-recommends install \
-      git \
-      ca-certificates \
+    apt -yq install \
       cmake \
       gcc \
       g++ \
-      make \
       libncurses5-dev \
-      libssl-dev \
-      libsodium-dev \
       libreadline-dev \
+      libssl-dev \
+      make \
       zlib1g-dev \
-      pkg-config
-# other apt packages recommended by above install: patch less ssh-client manpages manpages-dev libfile-fcntllock-perl liblocale-gettext-perl xz-utils libglib2.0-data shared-mime-info xdg-user-dirs krb5-locales publicsuffix libsasl2-modules netbase
+      file \
+      zip
+
+COPY --from=prep /usr/local/src /usr/local/src
 
 RUN mkdir -pv /logs && mkdir -pv /config
 
-# Cloning SoftEther VPN source code
-RUN git clone https://github.com/SoftEtherVPN/SoftEtherVPN.git /SoftEtherVPN
-RUN cd /SoftEtherVPN && \
-    git submodule init && \
-    git submodule update
+RUN cd /usr/local/src/SoftEtherVPN && \
+    sed 's/StrCmpi(region, "JP") == 0 || StrCmpi(region, "CN") == 0/false/' -i src/Cedar/Server.c && \
+    CMAKE_FLAGS="-DSE_LOGDIR=/logs -DSE_DBDIR=/config" ./configure && \
+    make -C tmp && \
+    make -C tmp package
 
-# Compiling SoftEther VPN server
-RUN cd /SoftEtherVPN && CMAKE_FLAGS="-DSE_LOGDIR=/logs -DSE_DBDIR=/config" ./configure
-RUN cd /SoftEtherVPN && make -C build
-RUN cd /SoftEtherVPN && make -C build install && cd /
-# Line below fixes error about missing libcedar.so
-RUN cp /usr/local/lib/*.so /usr/lib
+RUN mkdir -p /tmp/softether-pkgs && \
+    cp /usr/local/src/SoftEtherVPN/build/softether-*.deb /tmp/softether-pkgs
 
-# RUN cd /opt/vpnserver && make i_read_and_agree_the_license_agreement
+# RUN cp /usr/local/lib/*.so /usr/lib
 
-# COPY files/* /opt/
-# RUN chmod 755 /opt/*.sh
+FROM debian:10-slim
 
-EXPOSE 5555
+# Config file: /config/vpn_server.config
+VOLUME /config
+VOLUME /logs
 
-# VOLUMES
+# PORTS
+EXPOSE 443/tcp
+# 5555 = SoftEther & web interface
+EXPOSE 5555/tcp
+# 500, 4500 & 1701 = L3TP/IPsec
+EXPOSE 500/udp 4500/udp 1701/udp
+# 1194 & 992 = OpenVPN
+EXPOSE 1194/udp 1194/tcp 992/tcp
 
-# Config file: /usr/local/libexec/softether/vpnserver/vpn_server.config
+RUN apt update && \
+    apt install -yq --no-install-recommends \
+      libncurses6 \
+      libreadline7 \
+      libssl1.1 \
+      iptables \
+      zlib1g
 
-ENTRYPOINT /bin/bash
-# ENTRYPOINT /opt/start.sh
+COPY --from=build /tmp/softether-pkgs /tmp/softether-pkgs
+
+RUN dpkg -i /tmp/softether-pkgs/*.deb
+
+ENTRYPOINT [ "/usr/local/libexec/softether/vpnserver/vpnserver" ]
+
+CMD [ "start", "--foreground" ]
